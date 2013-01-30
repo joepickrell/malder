@@ -618,30 +618,30 @@ namespace ALD {
     int numbins = results_allchrom[0].size();
     vector <AlderResults> results_jackknife(num_chroms_used+1);
     for (int jc = 0; jc <= num_chroms_used; jc++) {
-      results_jackknife[jc].fit_start_dis = fit_start_dis;
-      results_jackknife[jc].jack_id = jack_ind_ids[jc];
-      vector <double> &x = results_jackknife[jc].d_Morgans;
-      vector <double> &y = results_jackknife[jc].weighted_LD_avg;
-      vector <double> &count = results_jackknife[jc].bin_count;
-      x = y = count = vector <double> (numbins);
-      // set up the remove-one data
-      vector <AffineData> affdats_minus_jc;
-      for (int c = 0; c < num_chroms_used; c++)
-	if (c != jc) {
-	  for (int b = 1; b < numbins; b++) {
-	    x[b] = b * binsize;
-	    y[b] += results_allchrom[c][b].first;
-	    count[b] += results_allchrom[c][b].second;
-	  }
-	  if (use_inter_chrom_affine)
-	    affdats_minus_jc.push_back(affine_data_allchrom[c]);
-	}
-      for (int b = 1; b < numbins; b++) y[b] /= count[b];
+    	results_jackknife[jc].fit_start_dis = fit_start_dis;
+    	results_jackknife[jc].jack_id = jack_ind_ids[jc];
+    	vector <double> &x = results_jackknife[jc].d_Morgans;
+    	vector <double> &y = results_jackknife[jc].weighted_LD_avg;
+    	vector <double> &count = results_jackknife[jc].bin_count;
+    	x = y = count = vector <double> (numbins);
+    	// set up the remove-one data
+    	vector <AffineData> affdats_minus_jc;
+    	for (int c = 0; c < num_chroms_used; c++)
+    		if (c != jc) {
+    			for (int b = 1; b < numbins; b++) {
+    				x[b] = b * binsize;
+    				y[b] += results_allchrom[c][b].first;
+    				count[b] += results_allchrom[c][b].second;
+    			}
+    			if (use_inter_chrom_affine)
+    				affdats_minus_jc.push_back(affine_data_allchrom[c]);
+    			}
+    	for (int b = 1; b < numbins; b++) y[b] /= count[b];
       if (use_inter_chrom_affine) {
-	x.push_back(INFINITY);
-	pair <double, double> aff_tot_count = compute_inter_chrom_affine(affdats_minus_jc);
-	y.push_back(aff_tot_count.first);
-	count.push_back(aff_tot_count.second);
+    	  x.push_back(INFINITY);
+    	  pair <double, double> aff_tot_count = compute_inter_chrom_affine(affdats_minus_jc);
+    	  y.push_back(aff_tot_count.first);
+    	  count.push_back(aff_tot_count.second);
       }
     }    
     return results_jackknife;

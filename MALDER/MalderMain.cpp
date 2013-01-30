@@ -1,40 +1,10 @@
 /*
-  todo:
-  - seg fault in Nick's getstring when blank
-  - seg fault when raw_outname is blank
-  - print message instead of mindis -1.0 when not set
-  - print message when no populations have curve (don't crash in DGESVD as in Italians)
-  - print warnings about being careful with interpretation of curves?
-    (1-ref can be caused by bottleneck, 2-ref doesn't necessarily imply closeness to true anc)
-  - improve code documentation, particularly for tricky algorithmic parts
+ * MalderMain.cpp
+ *
+ *  Created on: Jan 27, 2013
+ *      Author: pickrell
  */
 
-/*
-  1-ref:
-  - decide how far out to start fitting (mindis):
-    - if user has specified mindis param, use that (and print warning)
-    - else determine extent of correlated LD; use max(0.5cM, second significance failure)
-        if > thresh (2cM), refuse to proceed (but can override via mindis param)
-  - compute 1-ref weighted LD; output the data; fit the curve (at start bin +/- a few?)
-  2-ref:
-  - decide how far out to start fitting (mindis):
-    - if user has specified mindis param, use that (and print warning)
-    - else if using external weights and not specified, default to 0.5cM (and print warning)
-    - else determine extent of correlated LD; use max(0.5cM, second significance failure)
-        if > thresh (2cM), refuse to proceed (but can override via mindis param)
-  - compute 2-ref weighted LD; output the data; fit the curve (at start bin +/- a few)
-  - compute 1-ref weighted LD with each ref (but don't output these curves); fit the curves
-  - run tests:
-    - (a) are the individual curves real?  check min z-score of amp, decay has p-value < 0.05
-    - (b) are the curves consistent?  check diffs in decay <= 25% of 2-ref decay
-  3+-ref:
-  - iterate through ref pops
-    - if correlated LD extends past 2cM, ref fails
-    - if 1-ref weighted LD has no curve, ref fails
-  - compute multiple hypothesis correction
-  - run 2-ref weighted LD for pairs of non-failed refs
-    - fit each pair starting from max of correlated LD and run test
- */
 
 #include <iostream>
 #include <fstream>
@@ -42,7 +12,7 @@
 #include <algorithm>
 #include <utility>
 #include <set>
-
+#include <map>
 #include <omp.h>
 
 #include "nicklib.h"
@@ -70,7 +40,7 @@ int qtmode = NO ;
 void print_header(void) {
   printnl() ;
   cout << "        |                          " << endl;
-  cout << "        |      ALDER,   v" << string(VERSION) << endl;
+  cout << "        |      [M]ALDER,   v" << string(VERSION) << endl;
   cout << "     \\..|./                        " << endl;
   cout << "    \\ \\  /       Admixture         " << endl;
   cout << "     \\ |/ /      Linkage           " << endl;
@@ -135,7 +105,7 @@ int main(int argc, char *argv[]) {
   vector < vector <double> > ref_freqs =
     ProcessInput::process_geno(pars.genotypename, indiv_pop_inds, mixed_geno, ref_genos,
 			       snpmarkers, orig_numsnps);
-  
+
   // ----------------------- determine number of refs; set weights ------------------------ //
 
   vector <double> weights;
@@ -200,7 +170,9 @@ int main(int argc, char *argv[]) {
   // --------------- perform weighted LD computation: 1-ref and 2-ref cases --------------- //
 
   if (num_ref_freqs <= 2) { // includes the external-weights case of num_ref_freqs == 0
+	  cerr << "Need more than 2 populations\n"; exit(1);
 
+	  /*
     double fit_start_dis = *max_element(fit_starts.begin(), fit_starts.end());
 
     // ------------ compute weighted LD curve (1-ref or 2-ref as appropriate) ------------- //
@@ -240,7 +212,7 @@ int main(int argc, char *argv[]) {
 	for (int r = 0; r < 2; r++) {
 	  printhline();
 	  alder.run(1, vector <int> (1, r), ref_freqs[r], pars.maxdis, pars.binsize, pars.mincount,
-		    pars.use_naive_algo, fit_starts[r]/*fit_start_dis*/, fits_all_starts_refs[r],
+		    pars.use_naive_algo, fit_starts[r]/*fit_start_dis*//*,*/ /*fits_all_starts_refs[r],
 		    fit_test_ind_refs[r]); // fit starting from each LD corr cutoff
 
 	  for (int f = 0; f < (int) fits_all_starts_refs[r].size(); f++)
@@ -252,7 +224,7 @@ int main(int argc, char *argv[]) {
 
 	printhline();
 	cout << "               *** Comparing curves to test for admixture ***" << endl << endl;
-    
+
 	int r1 = 0, r2 = 1;
 	for (int f = 0; f < (int) fits_all_starts.size(); f++) {
 	  fits_all_starts[f].print_fit_header();
@@ -281,6 +253,7 @@ int main(int argc, char *argv[]) {
       printf("Mixture fraction %% lower bound (assuming admixture): %.1f +/- %.1f\n",
 	     100*alpha_mean_std.first, 100*alpha_mean_std.second);
     }
+*/
   }
 
   // ------------------- perform weighted LD computation: >=3-ref case -------------------- //
@@ -311,13 +284,13 @@ int main(int argc, char *argv[]) {
       for (int f = 0; f < (int) fits_all_starts_refs[r].size(); f++)
 	fits_all_starts_refs[r][f].print_fit(pars.print_jackknife_fits);
       cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
-      
+
       cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with "
 	   << ref_pop_names[r] << "?" << endl;
       has_oneref_curve[r] =
 	fits_all_starts_refs[r][fit_test_ind_refs[r]].test_and_print_oneref_curve();
     }
-    
+
     printhline();
     cout << "                 *** Summary of 1-ref pre-test results ***" << endl << endl;
     cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with..."
@@ -338,7 +311,8 @@ int main(int argc, char *argv[]) {
     ExpFitALD::print_data_header(); // header line for grepping data
 
     // ------------ run test on all pairs of refs with significant 1-ref curves ----------- //
-
+    map<string, vector<AlderResults> > all_curves;  //store all pairwise curves
+    //vector<pair<string, string> > all_names; //store names
     for (int r1 = 0; r1 < num_ref_freqs; r1++) {
       if (!has_oneref_curve[r1]) continue;
       for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
@@ -351,11 +325,11 @@ int main(int argc, char *argv[]) {
     	  ref_inds.resize(2); ref_inds[0] = r1; ref_inds[1] = r2;
     	  vector <AlderResults> results_jackknife =
     			  alder.run(2, ref_inds, weights, pars.maxdis, pars.binsize, pars.mincount,
-							pars.use_naive_algo, fit_start_dis, fits_all_starts, fit_test_ind);
+    					  pars.use_naive_algo, fit_start_dis, fits_all_starts, fit_test_ind);
     	  plot_ascii_curve(results_jackknife.back(), fit_start_dis);
 
     	  for (int f = 0; f < (int) fits_all_starts.size(); f++)
-			fits_all_starts[f].print_fit(pars.print_jackknife_fits);
+    		  fits_all_starts[f].print_fit(pars.print_jackknife_fits);
 
     	  cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
 
@@ -364,6 +338,9 @@ int main(int argc, char *argv[]) {
 				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
 				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
 				      false, mult_hyp_corr);
+    	  string pops = ref_pop_names[r1]+"::"+ref_pop_names[r2];
+    	  all_curves.insert(make_pair(pops, results_jackknife));
+
       }
     }
   }

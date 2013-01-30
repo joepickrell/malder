@@ -19,7 +19,7 @@ namespace Jackknife {
     }
     return sqrt((s2 - s*s/n) * (n-1) / n);
   }
-
+//
   // assumes last element of x is the leave-no-data-out estimator (previous are jackknife reps)
   pair <double, double> mean_std(const vector <double> &x) {
     int n = x.size()-1; // number of jackknife reps

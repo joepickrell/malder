@@ -135,11 +135,11 @@ int main(int argc, char *argv[]) {
     }
     else { // multiple refs
       if (pars.raw_outname != NULL) {
-	cout << "WARNING: raw output is not written when testing with >= 3 ref pops" << endl;
-	ofstream fout(pars.raw_outname);
-	fout << "raw output is not written when testing with >= 3 ref pops" << endl;
-	fout << "(to obtain raw data, perform individual 1-ref or 2-ref runs)" << endl;
-	fout.close();
+    	  cout << "WARNING: raw output is not written when testing with >= 3 ref pops" << endl;
+    	  ofstream fout(pars.raw_outname);
+    	  fout << "raw output is not written when testing with >= 3 ref pops" << endl;
+    	  fout << "(to obtain raw data, perform individual 1-ref or 2-ref runs)" << endl;
+    	  fout.close();
       }
     }
     cout << "number of reference populations: " << num_ref_freqs << endl;
@@ -324,9 +324,9 @@ int main(int argc, char *argv[]) {
     //
 
     for (int r1 = 0; r1 < num_ref_freqs; r1++) {
-      if (!has_oneref_curve[r1]) continue;
+      //if (!has_oneref_curve[r1]) continue;
       for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
-    	  if (!has_oneref_curve[r2]) continue;
+    	 // if (!has_oneref_curve[r2]) continue;
 
     	  printhline();
     	  double fit_start_dis = max(fit_starts[r1], fit_starts[r2]);
@@ -343,13 +343,13 @@ int main(int argc, char *argv[]) {
 
     	  cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
 
-    	  ExpFitALD::run_admixture_test(fits_all_starts[fit_test_ind],
+    	  bool success = ExpFitALD::run_admixture_test(fits_all_starts[fit_test_ind],
 				      fits_all_starts_refs[r1][fit_test_ind_refs[r1]],
 				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
 				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
 				      false, mult_hyp_corr);
     	  string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
-    	  all_curves.insert(make_pair(pops, results_jackknife));
+    	  if (success) all_curves.insert(make_pair(pops, results_jackknife));
 
       }
     }
@@ -358,37 +358,22 @@ int main(int argc, char *argv[]) {
     //
     // Joe's edits
     //
-    MultFitALD mfit(1, &all_curves);
-    mfit.fit_curves();
-    mfit.print_fitted();
-    mfit.add_mix();
-    mfit.print_fitted();
-    mfit.add_mix();
-    mfit.print_fitted();
-    AlderResults r = all_curves["French;Ju|'hoan_North"].back();
-    ofstream tmpout("testout");
-	double affine = r.weighted_LD_avg[r.bin_count.size()-1];
-	vector<double> amps = mfit.expamps["French;Ju|'hoan_North"];
-	double sum = 0;
-	for (int i =0; i < (int) r.bin_count.size()-1; i++){
-		double d = r.d_Morgans[i];
-		if (d < r.fit_start_dis) continue;
-		double pred = affine;
-		for (int j = 0; j < mfit.nmix; j++){
-			pred += amps[j] + exp(-d* mfit.times[j]);
-		}
-		double diff = pred-r.weighted_LD_avg[i];
-		sum += diff*diff;
-		tmpout << d << " "<< pred << " "<< r.weighted_LD_avg[i] << " "<< affine << "\n";
-	}
-	//cout << mfit.ss() << "\n";
-	//mfit.expamps["French;Ju|'hoan_North"][0] = 0;
-	//cout << mfit.ss() << "\n";
-    //
-    //
-    //
+    if (all_curves.size() > 1){
+    	bool done = false;
+    	MultFitALD mfit(1, &all_curves);
+    	pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves();
+    	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
+    	mfit.print_fitted(&fit, &jk);
 
-
+    	while (!done){
+    		fit = mfit.add_mix();
+    		jk = mfit.jackknife();
+    		done = mfit.print_fitted(&fit, &jk);
+    	}
+    	if (pars.raw_outname != NULL) {
+    		mfit.print_curves(pars.raw_outname);
+    	}
+    }
   }
 
 

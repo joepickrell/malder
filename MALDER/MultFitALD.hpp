@@ -7,8 +7,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "Alder.hpp"
-#include "asa047.hpp"
+#include "Jackknife.hpp"
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_multimin.h>
@@ -20,6 +21,8 @@ using ALD::AlderResults;
 using std::cout;
 using std::make_pair;
 using std::stringstream;
+using std::pair;
+using std::ofstream;
 
 class MultFitALD{
 public:
@@ -31,11 +34,19 @@ public:
 	map<string, vector<double> > expamps;
 	map<string, double> affine_amps;
 	double ss();
-	void fit_curves();
+	double ss(int);
+	pair< vector<double>, map <string, vector<double> > > fit_curves();
+	void fit_curves_jack(int);
 	int golden_section_time(double, double, double, double, int);
 	int golden_section_amp(double, double, double, double, string, int);
-	void print_fitted();
-	void add_mix();
+	int golden_section_time(double, double, double, double, int, int);
+	int golden_section_amp(double, double, double, double, string, int, int);
+	bool print_fitted(pair< vector<double>, map <string, vector<double> > >* , pair< vector<vector<double> >, vector<map <string, vector<double> > > >*);
+	void print_fitted(string);
+	pair< vector<double>, map <string, vector<double> > > add_mix();
+	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jackknife();
+	void print_curves(const char *);
+	//double get_timese(int, vector<double>, vector< vector<double> >);
 };
 
 

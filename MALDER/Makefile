@@ -13,8 +13,8 @@ IDIRS = ${ADMIXDIR} ${ADMIXDIR}/nicksrc
 NLIB = ${ADMIXDIR}/libnick.a # note: Nick copies this to admixlib/nicklib.a
 ADMIX_O = $(addprefix ${ADMIXDIR}/,  admutils.o  ldsubs.o  mcio.o  regsubs.o  egsubs.o)
 
-T = alder
-O = asa047.o MalderMain.o Alder.o AlderParams.o CorrJack.o ExpFitALD.o ExpFit.o Jackknife.o MiscUtils.o ProcessInput.o Timer.o MultFitALD.o
+T = malder
+O = MalderMain.o Alder.o AlderParams.o CorrJack.o ExpFitALD.o ExpFit.o Jackknife.o MiscUtils.o ProcessInput.o Timer.o MultFitALD.o
 
 .PHONY: libnick.a clean
 

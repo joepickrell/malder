@@ -24,6 +24,7 @@
 #include "AlderParams.hpp"
 #include "Alder.hpp"
 #include "ProcessInput.hpp"
+#include "MultFitALD.hpp"
 
 using namespace std;
 using namespace ALD;
@@ -311,8 +312,17 @@ int main(int argc, char *argv[]) {
     ExpFitALD::print_data_header(); // header line for grepping data
 
     // ------------ run test on all pairs of refs with significant 1-ref curves ----------- //
+
+    //
+    //
+    // Joe's edits
+    //
+    //
     map<string, vector<AlderResults> > all_curves;  //store all pairwise curves
-    //vector<pair<string, string> > all_names; //store names
+    //
+    //
+    //
+
     for (int r1 = 0; r1 < num_ref_freqs; r1++) {
       if (!has_oneref_curve[r1]) continue;
       for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
@@ -338,12 +348,50 @@ int main(int argc, char *argv[]) {
 				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
 				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
 				      false, mult_hyp_corr);
-    	  string pops = ref_pop_names[r1]+"::"+ref_pop_names[r2];
+    	  string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
     	  all_curves.insert(make_pair(pops, results_jackknife));
 
       }
     }
+
+
+    //
+    // Joe's edits
+    //
+    MultFitALD mfit(1, &all_curves);
+    mfit.fit_curves();
+    mfit.print_fitted();
+    mfit.add_mix();
+    mfit.print_fitted();
+    mfit.add_mix();
+    mfit.print_fitted();
+    AlderResults r = all_curves["French;Ju|'hoan_North"].back();
+    ofstream tmpout("testout");
+	double affine = r.weighted_LD_avg[r.bin_count.size()-1];
+	vector<double> amps = mfit.expamps["French;Ju|'hoan_North"];
+	double sum = 0;
+	for (int i =0; i < (int) r.bin_count.size()-1; i++){
+		double d = r.d_Morgans[i];
+		if (d < r.fit_start_dis) continue;
+		double pred = affine;
+		for (int j = 0; j < mfit.nmix; j++){
+			pred += amps[j] + exp(-d* mfit.times[j]);
+		}
+		double diff = pred-r.weighted_LD_avg[i];
+		sum += diff*diff;
+		tmpout << d << " "<< pred << " "<< r.weighted_LD_avg[i] << " "<< affine << "\n";
+	}
+	//cout << mfit.ss() << "\n";
+	//mfit.expamps["French;Ju|'hoan_North"][0] = 0;
+	//cout << mfit.ss() << "\n";
+    //
+    //
+    //
+
+
   }
+
+
   delete[] mixed_geno;
   for (int r = 0; r < (int) num_ref_indivs.size(); r++) delete[] ref_genos[r];
 }

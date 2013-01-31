@@ -110,22 +110,20 @@ namespace ALD {
     printf("\n");
   }
 
-  void write_raw_output(const char *filename, bool print_raw_jackknife,
-			const vector <AlderResults> &results_jackknife) {
-    for (int jc = print_raw_jackknife ? 0 : results_jackknife.size()-1;
-	 jc < (int) results_jackknife.size(); jc++) {
-      const AlderResults &results = results_jackknife[jc];
-      FILE *fptr = fopen(jc < (int) results_jackknife.size()-1 ? // append suffix if chrom left out
-			 (filename+("-"+results.jack_id)).c_str() : filename, "w");
-      fprintf(fptr, "#%9s\t%11s\t%13s\n", "d (cM)", "weighted LD", "bin count");
-      for (int b = 1; b < (int) results.d_Morgans.size(); b++)
-	fprintf(fptr, "%c%9.3f\t%11.8f\t%13Ld\n",
-		results.d_Morgans[b] < results.fit_start_dis - 1e-9 ? '#' : ' ',
-		100*results.d_Morgans[b], results.weighted_LD_avg[b],
-		(long long) results.bin_count[b]);
-      if (results.d_Morgans.back() == INFINITY)
-	fprintf(fptr, "# last row: affine term computed from pairs of SNPs on different chroms\n");
-      fclose(fptr);
+  void write_raw_output(const char *filename, bool print_raw_jackknife, const vector <AlderResults> &results_jackknife) {
+	  for (int jc = print_raw_jackknife ? 0 : results_jackknife.size()-1; jc < (int) results_jackknife.size(); jc++) {
+		  const AlderResults &results = results_jackknife[jc];
+		  FILE *fptr = fopen(jc < (int) results_jackknife.size()-1 ? // append suffix if chrom left out
+				  (filename+("-"+results.jack_id)).c_str() : filename, "w");
+		  fprintf(fptr, "#%9s\t%11s\t%13s\n", "d (cM)", "weighted LD", "bin count");
+		  for (int b = 1; b < (int) results.d_Morgans.size(); b++)
+			  fprintf(fptr, "%c%9.3f\t%11.8f\t%13Ld\n",
+					  results.d_Morgans[b] < results.fit_start_dis - 1e-9 ? '#' : ' ',
+							  100*results.d_Morgans[b], results.weighted_LD_avg[b],
+							  (long long) results.bin_count[b]);
+		  if (results.d_Morgans.back() == INFINITY)
+			  fprintf(fptr, "# last row: affine term computed from pairs of SNPs on different chroms\n");
+		  fclose(fptr);
     }
   }
 

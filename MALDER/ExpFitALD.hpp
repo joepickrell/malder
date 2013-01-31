@@ -4,14 +4,17 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 #include "ExpFit.hpp"
 #include "Jackknife.hpp"
+
 
 namespace ALD {
 
   using std::string;
   using std::vector;
   using std::pair;
+  using std::map;
 
   class ExpFitALD {
     vector <double> gen, amp_tot, amp_exp, amp_aff;
@@ -54,6 +57,8 @@ namespace ALD {
 				   bool run_pretest, double mult_hyp_corr);
     pair <double, double> mix_frac_bound(const vector <double> &f2_jacks); // f2(C,A) jack reps
     static void print_data_header(void);
+
+
   };
 }
 

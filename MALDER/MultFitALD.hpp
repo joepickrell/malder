@@ -14,6 +14,7 @@
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_vector.h>
+#include "nnls.h"
 using std::map;
 using std::string;
 using std::vector;
@@ -23,6 +24,7 @@ using std::make_pair;
 using std::stringstream;
 using std::pair;
 using std::ofstream;
+using std::cerr;
 
 class MultFitALD{
 public:
@@ -36,8 +38,14 @@ public:
 	double ss();
 	double ss(int);
 	pair< vector<double>, map <string, vector<double> > > fit_curves();
+	pair< vector<double>, map <string, vector<double> > > fit_curves_nnls();
 	void fit_curves_jack(int);
+	void fit_curves_jack_nnls(int);
+	void fit_amps_nnls();
+	void fit_amps_nnls_jack(int);
 	int golden_section_time(double, double, double, double, int);
+	int golden_section_time_nnls(double, double, double, double, int);
+	int golden_section_time_nnls(double, double, double, double, int, int);
 	int golden_section_amp(double, double, double, double, string, int);
 	int golden_section_time(double, double, double, double, int, int);
 	int golden_section_amp(double, double, double, double, string, int, int);

@@ -269,6 +269,7 @@ int main(int argc, char *argv[]) {
     vector <bool> has_oneref_curve(num_ref_freqs, true);
 
     printhline();
+
     cout << "                     *** Running 1-ref pre-tests ***" << endl << endl;
 
     vector <ExpFitALD> fits_all_starts_refs[num_ref_freqs];
@@ -305,7 +306,6 @@ int main(int argc, char *argv[]) {
 				   fits_all_starts_refs[r][fit_test_ind_refs[r]].zscore("amp_exp")));
     }
     cout << endl;
-
     double mult_hyp_corr = alder.compute_mult_hyp_corr(vector <bool> (num_ref_freqs, true));
 
     printhline();
@@ -361,7 +361,10 @@ int main(int argc, char *argv[]) {
     if (all_curves.size() > 1){
     	bool done = false;
     	MultFitALD mfit(1, &all_curves);
-    	pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves();
+    	//mfit.fit_amps_nnls();
+    	//mfit.print_fitted("test");
+    	pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves_nnls();
+    	mfit.print_fitted("test");
     	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
     	mfit.print_fitted(&fit, &jk);
 

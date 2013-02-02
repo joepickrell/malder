@@ -231,11 +231,19 @@ int MultFitALD::golden_section_time_nnls(double min, double guess, double max, d
         }
 
         times[which] = exp(x);
-        fit_amps_nnls();
+        bool conv = fit_amps_nnls();
+        if (!conv){
+        	cout << "Exiting optimization, did not converge\n";
+        	return 1;
+        }
         double f_x = ss();
 
         times[which] = exp(guess);
-        fit_amps_nnls();
+        conv = fit_amps_nnls();
+        if (!conv){
+          	cout << "Exiting optimization, did not converge\n";
+          	return 1;
+          }
         double f_guess = ss();
         //cout << which << " "<< exp(x) << " "<< exp(guess) << " "<< f_x << " "<< f_guess << "\n";
         if (f_x < f_guess){
@@ -260,11 +268,19 @@ int MultFitALD::golden_section_time_nnls(double min, double guess, double max, d
         }
 
         times[which] = exp(x);
-        fit_amps_nnls_jack(wjack);
+        bool conv = fit_amps_nnls_jack(wjack);
+        if (!conv){
+           	cout << "Exiting optimization, did not converge\n";
+           	return 1;
+        }
         double f_x = ss(wjack);
 
         times[which] = exp(guess);
-        fit_amps_nnls_jack(wjack);
+        conv = fit_amps_nnls_jack(wjack);
+        if (!conv){
+             	cout << "Exiting optimization, did not converge\n";
+             	return 1;
+        }
         double f_guess = ss(wjack);
         //cout << which << " "<< exp(x) << " "<< exp(guess) << " "<< f_x << " "<< f_guess << "\n";
         if (f_x < f_guess){
@@ -276,7 +292,7 @@ int MultFitALD::golden_section_time_nnls(double min, double guess, double max, d
                 else return golden_section_time(x, guess, max, tau, which, wjack);
         }
 }
-void MultFitALD::fit_amps_nnls(){
+bool MultFitALD::fit_amps_nnls(){
 	for (map<string, vector<AlderResults> >::iterator it = curves->begin(); it != curves->end(); it++){
 		string ps = it->first;
 		AlderResults r = it->second.back();
@@ -350,12 +366,22 @@ void MultFitALD::fit_amps_nnls(){
 		else{
 			//cout << "Warning: fit did not converge\n";
 			for (int i =0 ; i < nmix; i++) expamps[ps][i] = 0;
+
+	        delete [] A;
+	        delete [] b;
+	        delete [] x;
+			return false;
 		}
+		delete [] A;
+		delete [] b;
+		delete [] x;
 	}
+
+	return true;
 }
 
 
-void MultFitALD::fit_amps_nnls_jack(int which){
+bool MultFitALD::fit_amps_nnls_jack(int which){
 	for (map<string, vector<AlderResults> >::iterator it = curves->begin(); it != curves->end(); it++){
 		string ps = it->first;
 		AlderResults r = it->second[which];
@@ -428,8 +454,17 @@ void MultFitALD::fit_amps_nnls_jack(int which){
 		else{
 			//cout << "Warning: fit did not converge\n";
 			for (int i =0 ; i < nmix; i++) expamps[ps][i] = 0;
+	        delete [] A;
+	        delete [] b;
+	        delete [] x;
+			return false;
 		}
+	    delete [] A;
+	    delete [] b;
+	    delete [] x;
 	}
+
+	return true;
 }
 
 int MultFitALD::golden_section_amp(double min, double guess, double max, double tau, string pops, int which){

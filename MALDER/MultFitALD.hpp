@@ -41,8 +41,8 @@ public:
 	pair< vector<double>, map <string, vector<double> > > fit_curves_nnls();
 	void fit_curves_jack(int);
 	void fit_curves_jack_nnls(int);
-	void fit_amps_nnls();
-	void fit_amps_nnls_jack(int);
+	bool fit_amps_nnls();
+	bool fit_amps_nnls_jack(int);
 	int golden_section_time(double, double, double, double, int);
 	int golden_section_time_nnls(double, double, double, double, int);
 	int golden_section_time_nnls(double, double, double, double, int, int);

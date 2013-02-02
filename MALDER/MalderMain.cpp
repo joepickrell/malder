@@ -275,37 +275,37 @@ int main(int argc, char *argv[]) {
     vector <ExpFitALD> fits_all_starts_refs[num_ref_freqs];
     int fit_test_ind_refs[num_ref_freqs];
     for (int r = 0; r < num_ref_freqs; r++) {
-      if (fit_starts[r] == INFINITY) {
-	has_oneref_curve[r] = false;
-	continue;
-      }
-      printhline();
-      alder.run(1, vector <int> (1, r), ref_freqs[r], pars.maxdis, pars.binsize, pars.mincount,
-		pars.use_naive_algo, fit_starts[r], fits_all_starts_refs[r], fit_test_ind_refs[r]);
+    	if (fit_starts[r] == INFINITY) {
+    		has_oneref_curve[r] = false;
+    		continue;
+    	}
+    	printhline();
+    	//alder.run(1, vector <int> (1, r), ref_freqs[r], pars.maxdis, pars.binsize, pars.mincount,
+		//pars.use_naive_algo, fit_starts[r], fits_all_starts_refs[r], fit_test_ind_refs[r]);
 
-      for (int f = 0; f < (int) fits_all_starts_refs[r].size(); f++)
-	fits_all_starts_refs[r][f].print_fit(pars.print_jackknife_fits);
-      cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
+    	//for (int f = 0; f < (int) fits_all_starts_refs[r].size(); f++)
+    	//	fits_all_starts_refs[r][f].print_fit(pars.print_jackknife_fits);
+    	//cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
 
-      cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with "
-	   << ref_pop_names[r] << "?" << endl;
-      has_oneref_curve[r] =
-	fits_all_starts_refs[r][fit_test_ind_refs[r]].test_and_print_oneref_curve();
+    	//cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with "
+    	//		<< ref_pop_names[r] << "?" << endl;
+    	//has_oneref_curve[r] =
+    	//		fits_all_starts_refs[r][fit_test_ind_refs[r]].test_and_print_oneref_curve();
     }
 
     printhline();
-    cout << "                 *** Summary of 1-ref pre-test results ***" << endl << endl;
-    cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with..."
-	 << endl;
-    for (int r = 0; r < num_ref_freqs; r++) {
-      printf("%20s: %3s ", ref_pop_names[r].c_str(), has_oneref_curve[r] ? "YES" : "NO");
-      if (fit_starts[r] == INFINITY)
-	printf("(cannot pre-test: long-range LD)\n");
-      else
-	printf("(z = %.2f)\n", min(fits_all_starts_refs[r][fit_test_ind_refs[r]].zscore("decay"),
-				   fits_all_starts_refs[r][fit_test_ind_refs[r]].zscore("amp_exp")));
-    }
-    cout << endl;
+  /// cout << "                 *** Summary of 1-ref pre-test results ***" << endl << endl;
+   // cout << "Pre-test: Does " << mixed_pop_name << " have a 1-ref weighted LD curve with..."
+	// << endl;
+    //for (int r = 0; r < num_ref_freqs; r++) {
+     // printf("%20s: %3s ", ref_pop_names[r].c_str(), has_oneref_curve[r] ? "YES" : "NO");
+     // if (fit_starts[r] == INFINITY)
+	//printf("(cannot pre-test: long-range LD)\n");
+     // else
+	//printf("(z = %.2f)\n", min(fits_all_starts_refs[r][fit_test_ind_refs[r]].zscore("decay"),
+	//			   fits_all_starts_refs[r][fit_test_ind_refs[r]].zscore("amp_exp")));
+    //}
+    //cout << endl;
     double mult_hyp_corr = alder.compute_mult_hyp_corr(vector <bool> (num_ref_freqs, true));
 
     printhline();
@@ -313,21 +313,17 @@ int main(int argc, char *argv[]) {
 
     // ------------ run test on all pairs of refs with significant 1-ref curves ----------- //
 
-    //
-    //
-    // Joe's edits
-    //
-    //
-    map<string, vector<AlderResults> > all_curves;  //store all pairwise curves
-    //
-    //
-    //
+
+
+    map<string, vector<AlderResults> > all_curves;  //store all pairwise curves --Joe
+
 
     for (int r1 = 0; r1 < num_ref_freqs; r1++) {
       //if (!has_oneref_curve[r1]) continue;
       for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
     	 // if (!has_oneref_curve[r2]) continue;
-
+    	  string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
+    	  //cout << pops << "\n";
     	  printhline();
     	  double fit_start_dis = max(fit_starts[r1], fit_starts[r2]);
     	  vector <ExpFitALD> fits_all_starts; int fit_test_ind = 0;
@@ -348,7 +344,7 @@ int main(int argc, char *argv[]) {
 				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
 				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
 				      false, mult_hyp_corr);
-    	  string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
+
     	  if (success) all_curves.insert(make_pair(pops, results_jackknife));
 
       }
@@ -364,7 +360,7 @@ int main(int argc, char *argv[]) {
     	//mfit.fit_amps_nnls();
     	//mfit.print_fitted("test");
     	pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves_nnls();
-    	mfit.print_fitted("test");
+    	//mfit.print_fitted("test");
     	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
     	mfit.print_fitted(&fit, &jk);
 

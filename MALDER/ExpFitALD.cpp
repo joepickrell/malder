@@ -209,16 +209,16 @@ namespace ALD {
 
     cout << "Do 2-ref and 1-ref curves have consistent decay rates?" << endl;
     bool consistency_success = true;
-    consistency_success &= oneref_1.print_test_fit_diff(tworef, "decay",
-							"1-ref " + ref_pop_name_1, "2-ref");
-    consistency_success &= oneref_2.print_test_fit_diff(tworef, "decay",
-							"1-ref " + ref_pop_name_2, "2-ref");
-    consistency_success &= oneref_2.print_test_fit_diff(oneref_1, "decay", 
-							"1-ref " + ref_pop_name_2,
-							"1-ref " + ref_pop_name_1);
-    printf("                                  %s\n", consistency_success ?
-	   "YES: decay rates are consistent" : "WARNING: decay rates are inconsistent");
-    cout << endl;
+    //consistency_success &= oneref_1.print_test_fit_diff(tworef, "decay",
+	//						"1-ref " + ref_pop_name_1, "2-ref");
+   // consistency_success &= oneref_2.print_test_fit_diff(tworef, "decay",
+	//						"1-ref " + ref_pop_name_2, "2-ref");
+    //consistency_success &= oneref_2.print_test_fit_diff(oneref_1, "decay",
+	//						"1-ref " + ref_pop_name_2,
+	//						"1-ref " + ref_pop_name_1);
+    //printf("                                  %s\n", consistency_success ?
+	//   "YES: decay rates are consistent" : "WARNING: decay rates are inconsistent");
+    //cout << endl;
 
     //test_success &= consistency_success; <-- this is now a warning
 
@@ -233,19 +233,23 @@ namespace ALD {
     cout << endl;
 
     //    succ/fail, C, A, B, z-score min of 2-ref decay and amp_exp, min z-score A-ref, min z-score B-ref, max percent discordance, decay +/- std, amp +/- std for all three curves
-    printf("DATA:\t%s%s\t%.2g\t%s\t%s\t%s\t%.2f\t%.2f\t%.2f\t%.0f%%\t%s\t%s\t%s\t%s\t%s\t%s\n",
-	   (test_success ? "success" : "failure"),
-	   (consistency_success ? "" : " (warning: decay rates inconsistent)"),
-	   p_value, mixed_pop_name.c_str(), ref_pop_name_1.c_str(), ref_pop_name_2.c_str(),
-	   test_zscore,
-	   min(oneref_1.zscore("decay"), oneref_1.zscore("amp_exp")),
-	   min(oneref_2.zscore("decay"), oneref_2.zscore("amp_exp")),
-	   max(fabs(oneref_1.compute_diff_zscore_percent(tworef, "decay").second),
-	       max(fabs(oneref_2.compute_diff_zscore_percent(tworef, "decay").second),
-		   fabs(oneref_2.compute_diff_zscore_percent(oneref_1, "decay").second))),
-	   tworef.mean_std_str("decay").c_str(), tworef.mean_std_str("amp_exp").c_str(),
-	   oneref_1.mean_std_str("decay").c_str(), oneref_1.mean_std_str("amp_exp").c_str(),
-	   oneref_2.mean_std_str("decay").c_str(), oneref_2.mean_std_str("amp_exp").c_str());
+    //printf("DATA:\t%s%s\t%.2g\t%s\t%s\t%s\t%.2f\t%.2f\t%.2f\t%.0f%%\t%s\t%s\t%s\t%s\t%s\t%s\n",
+	//   (test_success ? "success" : "failure"),
+	//   (consistency_success ? "" : " (warning: decay rates inconsistent)"),
+	//   p_value, mixed_pop_name.c_str(), ref_pop_name_1.c_str(), ref_pop_name_2.c_str(),
+	//   test_zscore,
+	   //min(oneref_1.zscore("decay"), oneref_1.zscore("amp_exp")),
+	//   min(oneref_2.zscore("decay"), oneref_2.zscore("amp_exp")),
+	//   max(fabs(oneref_1.compute_diff_zscore_percent(tworef, "decay").second),
+	//       max(fabs(oneref_2.compute_diff_zscore_percent(tworef, "decay").second),
+	//	   fabs(oneref_2.compute_diff_zscore_percent(oneref_1, "decay").second))),
+	//   tworef.mean_std_str("decay").c_str(), tworef.mean_std_str("amp_exp").c_str(),
+	//   oneref_1.mean_std_str("decay").c_str(), oneref_1.mean_std_str("amp_exp").c_str(),
+	//   oneref_2.mean_std_str("decay").c_str(), oneref_2.mean_std_str("amp_exp").c_str());
+    printf("DATA:\t%s\t%.2g\t%s\t%s\t%s\t%.2f\t%s\t%s\n", (test_success ? "success" : "failure"), p_value,
+    		mixed_pop_name.c_str(), ref_pop_name_1.c_str(), ref_pop_name_2.c_str(), test_zscore,
+    		tworef.mean_std_str("decay").c_str(), tworef.mean_std_str("amp_exp").c_str());
+
     cout << endl;
   
     return test_success;

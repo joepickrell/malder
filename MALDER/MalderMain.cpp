@@ -357,16 +357,21 @@ int main(int argc, char *argv[]) {
     if (all_curves.size() > 1){
     	bool done = false;
     	MultFitALD mfit(1, &all_curves);
-    	//mfit.fit_amps_nnls();
-    	//mfit.print_fitted("test");
-    	pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves_nnls();
-    	//mfit.print_fitted("test");
-    	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
+    	pair< vector<double>, map <string, vector<double> > > fit = mfit.GSL_optim();
+    	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.GSL_jack();
+    	//pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves_nnls();
+    	//pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
     	mfit.print_fitted(&fit, &jk);
 
     	while (!done){
     		fit = mfit.add_mix();
-    		jk = mfit.jackknife();
+    		//if (mfit.nmix == 2) {
+    		//	cout << mfit.ss() << " fitted\n"; cout.flush();
+    		//	mfit.GSL_optim();
+    		//	cout << mfit.ss() << " after\n"; cout.flush();
+    		//}
+
+    		jk = mfit.GSL_jack();
     		done = mfit.print_fitted(&fit, &jk);
     	}
     	if (pars.raw_outname != NULL) {

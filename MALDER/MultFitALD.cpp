@@ -12,8 +12,9 @@ MultFitALD::MultFitALD(int n, map<string, vector<AlderResults> >* ma){
 		for (int i = 0; i < nmix; i++)	amp.push_back(0.001);
 		expamps.insert(make_pair(ps, amp));
 	}
-	for (int i = 0; i < nmix; i++) times.push_back(10.0);
-	ss_epsilon = 1e-6;
+	for (int i = 0; i < nmix; i++) times.push_back(50.0);
+	ss_epsilon = 1e-10;
+	nelder_term = 0.01;
     phi = (1+sqrt(5))/2;
     resphi = 2-phi;
 }
@@ -41,6 +42,180 @@ double MultFitALD::ss(){
 	}
 	return toreturn*100000;
 }
+
+pair< vector<double>, map<string, vector<double> > > MultFitALD::GSL_optim(){
+	pair< vector<double>, map<string, vector<double> > > toreturn;
+	int nparam = nmix;
+	size_t iter = 0;
+	double size;
+    int status;
+    const gsl_multimin_fminimizer_type *T =
+    		gsl_multimin_fminimizer_nmsimplex2;
+    gsl_multimin_fminimizer *s;
+    gsl_vector *x;
+    gsl_vector *ss;
+    gsl_multimin_function lm;
+    lm.n = nparam;
+    lm.f = &GSL_ss;
+    struct GSL_params p;
+    p.d = this;
+    lm.params = &p;
+
+    //
+    // initialize parameters
+    //
+    x = gsl_vector_alloc (nparam);
+    for (int i = 0; i < nmix; i++)   gsl_vector_set(x, i, log(times[i]));
+
+    // set initial step sizes to 1
+    ss = gsl_vector_alloc(nparam);
+    gsl_vector_set_all(ss, 1.0);
+    s = gsl_multimin_fminimizer_alloc (T, nparam);
+
+    gsl_multimin_fminimizer_set (s, &lm, x, ss);
+    do
+     {
+             iter++;
+             status = gsl_multimin_fminimizer_iterate (s);
+
+             if (status){
+                     printf ("error: %s\n", gsl_strerror (status));
+                     break;
+             }
+             size = gsl_multimin_fminimizer_size(s);
+             status = gsl_multimin_test_size (size, nelder_term);
+
+
+                             for (int i = 0; i< nmix; i++){
+                                     cout << exp(gsl_vector_get (s->x, i)) << " ";
+                             }
+                     cout << s->fval << " "<< size << "\n";
+
+
+
+             if (status == GSL_SUCCESS){
+                     cout << "converged!\n";
+             }
+
+     }
+     while (status == GSL_CONTINUE && iter < 100000);
+     if (iter ==100000) {
+             cerr << "ERROR:: out of iterations\n";
+             exit(1);
+     }
+     for (int i = 0; i < nmix; i++) times[i] = exp(gsl_vector_get(s->x, i));
+     fit_amps_nnls();
+
+     for (vector<double>::iterator it = times.begin(); it != times.end(); it++) toreturn.first.push_back(*it);
+     for (map<string, vector<double> >::iterator it = expamps.begin(); it != expamps.end(); it++) {
+    	 vector<double> tmp;
+    	 for (vector<double>::iterator it2 = it->second.begin(); it2 != it->second.end(); it2++) tmp.push_back(*it2);
+    	 toreturn.second.insert(make_pair(it->first, tmp));
+     }
+
+     gsl_multimin_fminimizer_free (s);
+     gsl_vector_free (x);
+     gsl_vector_free(ss);
+     return toreturn;
+}
+
+
+void MultFitALD::GSL_optim(int which){
+	int nparam = nmix;
+    size_t iter = 0;
+    double size;
+    int status;
+    const gsl_multimin_fminimizer_type *T =
+    		gsl_multimin_fminimizer_nmsimplex2;
+    gsl_multimin_fminimizer *s;
+    gsl_vector *x;
+    gsl_vector *ss;
+    gsl_multimin_function lm;
+    lm.n = nparam;
+    lm.f = &GSL_ss_jack;
+    struct GSL_params p;
+    p.d = this;
+    p.which = which;
+    lm.params = &p;
+
+    //
+    // initialize parameters
+    //
+    x = gsl_vector_alloc (nparam);
+    for (int i = 0; i < nmix; i++)   gsl_vector_set(x, i, log(times[i]));
+
+    // set initial step sizes to 1
+    ss = gsl_vector_alloc(nparam);
+    gsl_vector_set_all(ss, 1.0);
+    s = gsl_multimin_fminimizer_alloc (T, nparam);
+
+    gsl_multimin_fminimizer_set (s, &lm, x, ss);
+    do
+     {
+             iter++;
+             status = gsl_multimin_fminimizer_iterate (s);
+
+             if (status){
+                     printf ("error: %s\n", gsl_strerror (status));
+                     break;
+             }
+             size = gsl_multimin_fminimizer_size(s);
+             status = gsl_multimin_test_size (size, nelder_term);
+
+
+                             for (int i = 0; i< nmix; i++){
+                                     cout << exp(gsl_vector_get (s->x, i)) << " ";
+                             }
+                     cout << s->fval << " "<< size << "\n";
+
+
+
+             if (status == GSL_SUCCESS){
+                     cout << "converged!\n";
+             }
+
+     }
+     while (status == GSL_CONTINUE && iter < 100000);
+     if (iter ==100000) {
+             cout << "out of iterations\n";
+             return;
+     }
+     for (int i = 0; i < nmix; i++) times[i] = exp(gsl_vector_get(s->x, i));
+     fit_amps_nnls();
+
+     gsl_multimin_fminimizer_free (s);
+     gsl_vector_free (x);
+     gsl_vector_free(ss);
+
+}
+
+
+
+double GSL_ss(const gsl_vector *x, void *params ){
+	//first set times
+	int np = ((struct GSL_params *) params)->d->nmix;
+	for (int i = 0; i < np; i++){
+		((struct GSL_params *) params)->d->times[i] = exp(gsl_vector_get(x, i));
+	}
+	//set amplitudes
+	((struct GSL_params *) params)->d->fit_amps_nnls();
+
+	return ((struct GSL_params *) params)->d->ss();
+}
+
+double GSL_ss_jack(const gsl_vector *x, void *params ){
+	//first set times
+	int np = ((struct GSL_params *) params)->d->nmix;
+	int which = ((struct GSL_params *) params)->which;
+	for (int i = 0; i < np; i++){
+		((struct GSL_params *) params)->d->times[i] = exp(gsl_vector_get(x, i));
+	}
+	//set amplitudes
+	((struct GSL_params *) params)->d->fit_amps_nnls_jack(which);
+
+	return ((struct GSL_params *) params)->d->ss(which);
+}
+
 
 
 double MultFitALD::ss(int which){
@@ -575,7 +750,7 @@ bool MultFitALD::print_fitted(pair< vector<double>, map <string, vector<double> 
 			if (it == curves->begin()) all_timez.push_back(timez);
 			double ampz = ampdata.first/ampdata.second;
 			if (max_ampz[i]< ampz && !std::isnan(ampz)) max_ampz[i] = ampz;
-			cout << "\t" << expamps[ps][i] << " +/- "<< ampdata.second << " (Z="<< ampz <<")\t" << times[i] << " +/- " << timedata.second << " (Z="<< timez<< ")";
+			cout << "\t" << ampdata.first << " +/- "<< ampdata.second << " (Z="<< ampz <<")\t" << timedata.first << " +/- " << timedata.second << " (Z="<< timez<< ")";
 		}
 		cout << "\n";
 	}
@@ -614,8 +789,8 @@ pair< vector<double>, map <string, vector<double> > > MultFitALD::add_mix(){
 		string ps = it->first;
 		expamps[ps].push_back(1e-7);
 	}
-	times.push_back(50.0);
-	return(fit_curves_nnls());
+	times.push_back(100.0);
+	return(GSL_optim());
 }
 
 pair< vector<vector<double> >, vector<map<string, vector<double> > > > MultFitALD::jackknife(){
@@ -625,6 +800,32 @@ pair< vector<vector<double> >, vector<map<string, vector<double> > > > MultFitAL
 	for (int i = 0; i < njack ; i++){
 		//cout << "fitting "<< i << "\n"; cout.flush();
 		fit_curves_jack_nnls(i);
+		//cout << i << " " << njack <<" ";
+		stringstream ss;
+		ss << i;
+		print_fitted(ss.str());
+		vector<double> tmptimes;
+		map<string,  vector<double> > tmpexp;
+		for (vector<double>::iterator it = times.begin(); it != times.end(); it++) tmptimes.push_back(*it);
+		for (map<string, vector<double> >::iterator it = expamps.begin(); it != expamps.end(); it++) {
+			vector<double> tmp;
+			for (vector<double>::iterator it2 = it->second.begin(); it2 != it->second.end(); it2++) tmp.push_back(*it2);
+			tmpexp.insert(make_pair(it->first, tmp));
+		}
+		toreturn.first.push_back(tmptimes);
+		toreturn.second.push_back(tmpexp);
+	}
+	return toreturn;
+}
+
+
+pair< vector<vector<double> >, vector<map<string, vector<double> > > > MultFitALD::GSL_jack(){
+	pair<vector<vector<double> >, vector<map<string, vector<double> > > > toreturn;
+	vector<AlderResults> r = curves->begin()->second;
+	int njack = r.size()-1;
+	for (int i = 0; i < njack ; i++){
+		//cout << "fitting "<< i << "\n"; cout.flush();
+		GSL_optim(i);
 		//cout << i << " " << njack <<" ";
 		stringstream ss;
 		ss << i;

@@ -54,8 +54,20 @@ public:
 	pair< vector<double>, map <string, vector<double> > > add_mix();
 	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jackknife();
 	void print_curves(const char *);
+
+	// trying GSL optimization
+	double nelder_term;
+	pair< vector<double>, map<string, vector<double> > > GSL_optim();
+	pair< vector<vector<double> >, vector<map <string, vector<double> > > >  GSL_jack();
+	void GSL_optim(int);
 	//double get_timese(int, vector<double>, vector< vector<double> >);
 };
 
+struct GSL_params{
+        MultFitALD *d;
+        int which;
+};
+extern double GSL_ss(const gsl_vector *, void *GSL_params);
+extern double GSL_ss_jack(const gsl_vector *, void *GSL_params);
 
 #endif

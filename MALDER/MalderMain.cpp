@@ -343,7 +343,7 @@ int main(int argc, char *argv[]) {
 				      fits_all_starts_refs[r1][fit_test_ind_refs[r1]],
 				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
 				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
-				      false, mult_hyp_corr);
+				      false, 1);
 
     	  if (success) all_curves.insert(make_pair(pops, results_jackknife));
 

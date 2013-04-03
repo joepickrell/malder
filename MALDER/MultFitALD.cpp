@@ -14,7 +14,7 @@ MultFitALD::MultFitALD(int n, map<string, vector<AlderResults> >* ma){
 	}
 	for (int i = 0; i < nmix; i++) times.push_back(50.0);
 	ss_epsilon = 1e-10;
-	nelder_term = 0.01;
+	nelder_term = 0.0001;
     phi = (1+sqrt(5))/2;
     resphi = 2-phi;
 }
@@ -86,16 +86,16 @@ pair< vector<double>, map<string, vector<double> > > MultFitALD::GSL_optim(){
              status = gsl_multimin_test_size (size, nelder_term);
 
 
-                             for (int i = 0; i< nmix; i++){
-                                     cout << exp(gsl_vector_get (s->x, i)) << " ";
-                             }
-                     cout << s->fval << " "<< size << "\n";
+                          //   for (int i = 0; i< nmix; i++){
+                           //          cout << exp(gsl_vector_get (s->x, i)) << " ";
+                         //    }
+                    // cout << s->fval << " "<< size << "\n";
 
 
 
-             if (status == GSL_SUCCESS){
-                     cout << "converged!\n";
-             }
+            // if (status == GSL_SUCCESS){
+            //         cout << "converged!\n";
+            // }
 
      }
      while (status == GSL_CONTINUE && iter < 100000);
@@ -163,16 +163,16 @@ void MultFitALD::GSL_optim(int which){
              status = gsl_multimin_test_size (size, nelder_term);
 
 
-                             for (int i = 0; i< nmix; i++){
-                                     cout << exp(gsl_vector_get (s->x, i)) << " ";
-                             }
-                     cout << s->fval << " "<< size << "\n";
+                           //  for (int i = 0; i< nmix; i++){
+                           //          cout << exp(gsl_vector_get (s->x, i)) << " ";
+                           //  }
+                   //  cout << s->fval << " "<< size << "\n";
 
 
 
-             if (status == GSL_SUCCESS){
-                     cout << "converged!\n";
-             }
+           //  if (status == GSL_SUCCESS){
+           //          cout << "converged!\n";
+           //  }
 
      }
      while (status == GSL_CONTINUE && iter < 100000);
@@ -789,7 +789,7 @@ pair< vector<double>, map <string, vector<double> > > MultFitALD::add_mix(){
 		string ps = it->first;
 		expamps[ps].push_back(1e-7);
 	}
-	times.push_back(100.0);
+	times.push_back(10.0);
 	return(GSL_optim());
 }
 
@@ -822,8 +822,11 @@ pair< vector<vector<double> >, vector<map<string, vector<double> > > > MultFitAL
 pair< vector<vector<double> >, vector<map<string, vector<double> > > > MultFitALD::GSL_jack(){
 	pair<vector<vector<double> >, vector<map<string, vector<double> > > > toreturn;
 	vector<AlderResults> r = curves->begin()->second;
+	vector<double> st;
+	for (int i = 0; i < times.size(); i++) st.push_back(times[i]);
 	int njack = r.size()-1;
 	for (int i = 0; i < njack ; i++){
+		for (int j = 0; j< times.size(); j++) times[j] = st[j];
 		//cout << "fitting "<< i << "\n"; cout.flush();
 		GSL_optim(i);
 		//cout << i << " " << njack <<" ";

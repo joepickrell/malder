@@ -9,12 +9,13 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 #include <algorithm>
 #include <utility>
 #include <set>
 #include <map>
 #include <omp.h>
-
+#include <gsl/gsl_rng.h>
 #include "nicklib.h"
 #include "mcmcpars.h"
 
@@ -71,6 +72,14 @@ int main(int argc, char *argv[]) {
 
   Timer timer;
   print_header();
+  //----------------------------------random number generator//
+  const gsl_rng_type * T;
+  gsl_rng * rr;
+  gsl_rng_env_setup();
+  T = gsl_rng_ranlxs2;
+  rr = gsl_rng_alloc(T);
+  int seed = (int) time(0);
+  gsl_rng_set(rr, seed);
 
   // ----------------------------------- read commands ------------------------------------ //
 
@@ -318,37 +327,60 @@ int main(int argc, char *argv[]) {
     map<string, vector<AlderResults> > all_curves;  //store all pairwise curves --Joe
 
 
+    vector<pair<int, int> > allpairs;
+    vector<pair<int, int> > pairs2use;
     for (int r1 = 0; r1 < num_ref_freqs; r1++) {
-      //if (!has_oneref_curve[r1]) continue;
-      for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
-    	 // if (!has_oneref_curve[r2]) continue;
-    	  string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
-    	  //cout << pops << "\n";
-    	  printhline();
-    	  double fit_start_dis = max(fit_starts[r1], fit_starts[r2]);
-    	  vector <ExpFitALD> fits_all_starts; int fit_test_ind = 0;
-    	  weights = subtract_freqs(ref_freqs, r1, r2);
-    	  ref_inds.resize(2); ref_inds[0] = r1; ref_inds[1] = r2;
-    	  vector <AlderResults> results_jackknife =
-    			  alder.run(2, ref_inds, weights, pars.maxdis, pars.binsize, pars.mincount,
-    					  pars.use_naive_algo, fit_start_dis, fits_all_starts, fit_test_ind);
-    	  plot_ascii_curve(results_jackknife.back(), fit_start_dis);
-
-    	  for (int f = 0; f < (int) fits_all_starts.size(); f++)
-    		  fits_all_starts[f].print_fit(pars.print_jackknife_fits);
-
-    	  cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
-
-    	  bool success = ExpFitALD::run_admixture_test(fits_all_starts[fit_test_ind],
-				      fits_all_starts_refs[r1][fit_test_ind_refs[r1]],
-				      fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
-				      mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
-				      false, 1);
-
-    	  if (success) all_curves.insert(make_pair(pops, results_jackknife));
-
-      }
+    	for (int r2 = r1+1; r2 < num_ref_freqs; r2++) {
+    		allpairs.push_back(make_pair(r1, r2));
+    	}
     }
+    // if bootstrapping, take random pairs
+    if (pars.bootstrap){
+    	for (int i = 0; i < allpairs.size(); i++) {
+    		int ranint = gsl_rng_uniform_int(rr, allpairs.size());
+    		pairs2use.push_back(allpairs[ranint]);
+    	}
+    }
+    else{
+       	for (int i = 0; i < allpairs.size(); i++) pairs2use.push_back(allpairs[i]);
+
+    }
+    for (int i = 0; i < pairs2use.size(); i++){
+    	pair<int, int> pp = pairs2use[i];
+    	stringstream tmpss;
+    	tmpss << i;
+    	string stri = tmpss.str();
+    	int r1 = pp.first;
+    	int r2 = pp.second;
+    	string pops = ref_pop_names[r1]+";"+ref_pop_names[r2];
+    	if (pars.bootstrap) pops = pops+"_" + stri;
+    	//	cout << pops << "\n";
+    	printhline();
+    	double fit_start_dis = max(fit_starts[r1], fit_starts[r2]);
+    	vector <ExpFitALD> fits_all_starts; int fit_test_ind = 0;
+    	weights = subtract_freqs(ref_freqs, r1, r2);
+    	ref_inds.resize(2); ref_inds[0] = r1; ref_inds[1] = r2;
+    	vector <AlderResults> results_jackknife =
+    			alder.run(2, ref_inds, weights, pars.maxdis, pars.binsize, pars.mincount,
+    					pars.use_naive_algo, fit_start_dis, fits_all_starts, fit_test_ind);
+    	plot_ascii_curve(results_jackknife.back(), fit_start_dis);
+
+    	for (int f = 0; f < (int) fits_all_starts.size(); f++)
+    		fits_all_starts[f].print_fit(pars.print_jackknife_fits);
+
+    	cout << "==> Time to run fits: " << timer.update_time() << endl << endl;
+
+    	bool success = ExpFitALD::run_admixture_test(fits_all_starts[fit_test_ind],
+    			fits_all_starts_refs[r1][fit_test_ind_refs[r1]],
+    			fits_all_starts_refs[r2][fit_test_ind_refs[r2]],
+    			mixed_pop_name, ref_pop_names[r1], ref_pop_names[r2],
+    			false, 1);
+
+    	if (success) all_curves.insert(make_pair(pops, results_jackknife));
+
+    }
+
+
 
 
     //
@@ -361,7 +393,7 @@ int main(int argc, char *argv[]) {
     	pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.GSL_jack();
     	//pair< vector<double>, map <string, vector<double> > > fit = mfit.fit_curves_nnls();
     	//pair< vector<vector<double> >, vector<map <string, vector<double> > > > jk = mfit.jackknife();
-    	mfit.print_fitted(&fit, &jk);
+    	done = mfit.print_fitted(&fit, &jk);
 
     	while (!done){
     		fit = mfit.add_mix();

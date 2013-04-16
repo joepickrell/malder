@@ -26,7 +26,7 @@ namespace ALD {
     int mincount;
     double mindis, maxdis, binsize; 
     int checkmap, verbose, num_threads;
-    bool print_raw_jackknife, use_naive_algo, fast_snp_read, approx_ld_corr;
+    bool print_raw_jackknife, use_naive_algo, fast_snp_read, approx_ld_corr, bootstrap;
     std::set <int> chrom_set, nochrom_set;
     bool print_jackknife_fits;
 

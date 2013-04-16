@@ -118,6 +118,7 @@ namespace ALD {
     printf("%20s: %f\n", "binsize", binsize);
     printf("%20s: %f\n", "mindis", mindis);
     printf("%20s: %f\n", "maxdis", maxdis);
+    printf("%20s: %s\n", "bootstrap", bootstrap ? "YES": "NO");
   
     printf("\nInput checks:\n");
     printf("%20s: %s\n", "fast_snp_read", fast_snp_read ? "YES" : "NO");
@@ -157,6 +158,7 @@ namespace ALD {
     chrom = NULL ;
     nochrom = NULL ;
     print_jackknife_fits = false ;
+    bootstrap = false;
   }
 
   void AlderParams::readcommands(int argc, char **argv, const char *VERSION) {
@@ -204,10 +206,11 @@ namespace ALD {
     getint(ph, "checkmap:", &checkmap) ;
     getint(ph, "mincount:", &mincount) ;
     getint(ph, "num_threads:", &num_threads) ;
-    int use_naive_algo_int = NO, fast_snp_read_int = NO, approx_ld_corr_int = YES;
+    int use_naive_algo_int = NO, fast_snp_read_int = NO, approx_ld_corr_int = YES, bootstrap_int = NO;
     getint(ph, "use_naive_algo:", &use_naive_algo_int) ; use_naive_algo = use_naive_algo_int==YES;
     getint(ph, "fast_snp_read:", &fast_snp_read_int) ; fast_snp_read = fast_snp_read_int==YES;
     getint(ph, "approx_ld_corr:", &approx_ld_corr_int) ; approx_ld_corr = approx_ld_corr_int==YES;
+    getint(ph, "bootstrap:", &bootstrap_int) ; bootstrap = bootstrap_int==YES;
     getstring(ph, "chrom:", &chrom) ;
     getstring(ph, "nochrom:", &nochrom) ;
     int print_jackknife_fits_int = NO;

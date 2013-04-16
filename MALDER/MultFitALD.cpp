@@ -756,10 +756,11 @@ bool MultFitALD::print_fitted(pair< vector<double>, map <string, vector<double> 
 	}
 	for (vector<double>::iterator it = max_ampz.begin(); it != max_ampz.end(); it++){
 		//cout << *it << " amp\n";
-		if (*it < 3) return true;
+		if (*it < 3.0) return true;
 	}
 	for (vector<double>::iterator it = all_timez.begin(); it != all_timez.end(); it++){
-		if (*it < 3) return true;
+		//cout << "timez "<< *it << "\n";
+		if (*it < 3.0) return true;
 	}
 	return false;
 
